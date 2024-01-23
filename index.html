@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Include TensorFlow.js library -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
@@ -35,6 +38,7 @@
       cursor: pointer;
     }
   </style>
+
   <title>Hotel Chatbot</title>
 </head>
 <body>
@@ -135,22 +139,6 @@
       return vocabulary.map(word => (text.includes(word) ? 1 : 0));
     }
 
-    function getAnswer(userInput) {
-      const preprocessedInput = preprocessText(userInput);
-      const vocabulary = Array.from(new Set(preprocessedInput.concat(...hotelInfo.map(preprocessText))));
-      
-      const userInputVector = vectorizeText(preprocessedInput, vocabulary);
-
-      const similarityScores = hotelInfo.map(info => {
-        const infoVector = vectorizeText(preprocessText(info), vocabulary);
-        return cosineSimilarity(userInputVector, infoVector);
-      });
-
-      const mostSimilarIndex = similarityScores.indexOf(Math.max(...similarityScores));
-
-      return hotelInfo[mostSimilarIndex];
-    }
-
     function askQuestion() {
       const userInput = document.getElementById("user-input").value;
       const chatOutput = document.getElementById("chat-output");
@@ -162,7 +150,32 @@
         document.getElementById("user-input").value = "";
       }
     }
+
+    // Add three dense layers using TensorFlow.js
+    const model = tf.sequential();
+    model.add(tf.layers.dense({ inputShape: [vocabulary.length], units: 64, activation: 'relu' }));
+    model.add(tf.layers.dense({ units: 32, activation: 'relu' }));
+    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
+
+    model.compile({ optimizer: 'adam', loss: 'binaryCrossentropy', metrics: ['accuracy'] });
+
+    function getAnswer(userInput) {
+      const preprocessedInput = preprocessText(userInput);
+      const vocabulary = Array.from(new Set(preprocessedInput.concat(...hotelInfo.map(preprocessText))));
+
+      const userInputVector = vectorizeText(preprocessedInput, vocabulary);
+
+      const similarityScores = hotelInfo.map(info => {
+        const infoVector = vectorizeText(preprocessText(info), vocabulary);
+        const inputTensor = tf.tensor([userInputVector]);
+        const infoTensor = tf.tensor([infoVector]);
+        return model.predict([inputTensor, infoTensor]).dataSync()[0];
+      });
+
+      const mostSimilarIndex = similarityScores.indexOf(Math.max(...similarityScores));
+
+      return hotelInfo[mostSimilarIndex];
+    }
   </script>
 </body>
 </html>
-
