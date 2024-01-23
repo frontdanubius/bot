@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #F5F5F5;
+      color: #333;
+    }
+    #chat-container {
+      width: 400px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    #input-container {
+      display: flex;
+      margin-top: 10px;
+    }
+    #user-input {
+      flex: 1;
+      padding: 8px;
+    }
+    #send-button {
+      padding: 8px;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+  <title>Hotel Chatbot</title>
+</head>
+<body>
+  <div id="chat-container">
+    <div id="chat-output">Welcome! How can I assist you today?</div>
+    <div id="input-container">
+      <input type="text" id="user-input" placeholder="Type your question">
+      <button id="send-button" onclick="askQuestion()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const hotelInfo = [
+      "The Danubius Hotel Regents Park is a 4-star hotel located in central London.",
+      "With 360 rooms and suites, we offer a range of comfortable accommodations for our guests.",
+      "Our hotel is situated near Regent's Park, providing a peaceful and scenic environment.",
+      "Enjoy modern amenities such as free Wi-Fi, flat-screen TVs, and 24-hour room service during your stay.",
+      "We have versatile event spaces suitable for conferences, weddings, and other special occasions.",
+      "Dine in style at our on-site restaurant, offering a diverse menu to cater to various tastes.",
+      "Take advantage of our fitness center and stay active while staying with us.",
+      "Explore nearby attractions, including the London Zoo and Madame Tussauds, just a short distance away.",
+      "We offer special packages and promotions for a delightful and cost-effective stay.",
+      "Our dedicated staff is committed to ensuring a pleasant and memorable experience for every guest.",
+      "Discover the beauty of London from the convenience of our well-located hotel.",
+      "Experience the charm of Regent's Park, known for its lush greenery and recreational activities.",
+      "Visit our website for exclusive online booking discounts and offers.",
+      "The hotel provides easy access to public transportation, making it convenient for exploring the city.",
+      "We prioritize the safety and well-being of our guests with enhanced cleaning and safety measures.",
+      "Plan your next event with us and benefit from our professional event planning services.",
+      "Unwind at our bar and lounge, offering a selection of beverages in a relaxed atmosphere.",
+      "Indulge in a luxurious spa experience with our rejuvenating wellness treatments.",
+      "Join our loyalty program to enjoy exclusive perks and discounts during your future stays.",
+      "Our hotel is a perfect choice for both business travelers and leisure seekers.",
+      "Host a successful business meeting in our state-of-the-art meeting rooms equipped with modern technology.",
+      "Discover nearby shopping districts and entertainment options within walking distance from the hotel.",
+      "We offer pet-friendly accommodations, ensuring your furry friends are welcome during your stay.",
+      "Take advantage of our concierge services for recommendations and assistance in exploring the city.",
+      "Experience the vibrant culture of London with easy access to theaters, museums, and historic landmarks.",
+      "The hotel is committed to sustainability, implementing eco-friendly practices to reduce our environmental impact.",
+      "Relax in our spacious and elegantly designed lobby, providing a welcoming atmosphere for guests.",
+      "Our team is available 24/7 to assist you with any inquiries or requests during your stay.",
+      "Join our mailing list to receive updates on promotions, events, and special offers.",
+      "We offer accessible rooms and facilities to ensure a comfortable stay for all guests.",
+      "Elevate your stay with our executive suites, featuring additional amenities and personalized services.",
+      "Immerse yourself in the rich history of London with easy access to historical sites and museums.",
+      "Book direct with us for the best rates and exclusive benefits during your stay.",
+      "guilly is barbara's pet. It's a black labrador.",
+      "Jude peiris is the front desk manager. He's been working with danubius for 15 years ",
+      " Marsha is Jude's assistant and shift leader",
+      " Air canada has around 95 rooms booked daily",
+      "The hotel is a proud supporter of local communities and actively participates in charitable initiatives.",
+      "Celebrate special occasions with us, and let our team create memorable experiences for you and your guests.",
+      "Our commitment to excellence has earned us recognition and awards in the hospitality industry.",
+      "We prioritize sustainability and have implemented measures to reduce our carbon footprint.",
+      "Stay connected with complimentary high-speed internet access available throughout the hotel.",
+      "Discover culinary delights at our signature restaurant, offering a diverse menu crafted by skilled chefs.",
+      "Experience a seamless check-in and check-out process with our efficient and friendly reception staff.",
+      "Our hotel is equipped with modern technology to cater to the needs of business travelers.",
+      "Enjoy a relaxing swim in our indoor pool, providing a refreshing break during your stay.",
+      "We offer flexible cancellation policies to provide peace of mind for our guests.",
+      "Immerse yourself in the local culture with recommended excursions and activities provided by our concierge.",
+      "Our hotel is conveniently located near major transportation hubs, facilitating easy travel for our guests.",
+      "Celebrate love and romance with our special wedding packages tailored to create unforgettable moments.",
+    ];
+
+    function cosineSimilarity(vector1, vector2) {
+      const dotProduct = vector1.reduce((acc, val, i) => acc + val * vector2[i], 0);
+      const magnitude1 = Math.sqrt(vector1.reduce((acc, val) => acc + val ** 2, 0));
+      const magnitude2 = Math.sqrt(vector2.reduce((acc, val) => acc + val ** 2, 0));
+      return dotProduct / (magnitude1 * magnitude2);
+    }
+
+    function preprocessText(text) {
+      return text.toLowerCase().replace(/[^\w\s]/g, "").split(" ");
+    }
+
+    function vectorizeText(text, vocabulary) {
+      return vocabulary.map(word => (text.includes(word) ? 1 : 0));
+    }
+
+    function getAnswer(userInput) {
+      const preprocessedInput = preprocessText(userInput);
+      const vocabulary = Array.from(new Set(preprocessedInput.concat(...hotelInfo.map(preprocessText))));
+      
+      const userInputVector = vectorizeText(preprocessedInput, vocabulary);
+
+      const similarityScores = hotelInfo.map(info => {
+        const infoVector = vectorizeText(preprocessText(info), vocabulary);
+        return cosineSimilarity(userInputVector, infoVector);
+      });
+
+      const mostSimilarIndex = similarityScores.indexOf(Math.max(...similarityScores));
+
+      return hotelInfo[mostSimilarIndex];
+    }
+
+    function askQuestion() {
+      const userInput = document.getElementById("user-input").value;
+      const chatOutput = document.getElementById("chat-output");
+
+      if (userInput.trim() !== "") {
+        const answer = getAnswer(userInput);
+        chatOutput.innerHTML += `<br><strong>User:</strong> ${userInput}`;
+        chatOutput.innerHTML += `<br><strong>Chatbot:</strong> ${answer}`;
+        document.getElementById("user-input").value = "";
+      }
+    }
+  </script>
+</body>
+</html>
+
