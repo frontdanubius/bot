@@ -1,41 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Include TensorFlow.js library -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: 'Arial', sans-serif;
-      background-color: #F5F5F5;
+      background-color: #f0f0f0;
       color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
+
     #chat-container {
       width: 400px;
-      margin: 50px auto;
-      padding: 20px;
       background-color: #fff;
       border: 1px solid #ccc;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
     }
+
+    #chat-output {
+      padding: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
     #input-container {
       display: flex;
-      margin-top: 10px;
+      border-top: 1px solid #ccc;
     }
+
     #user-input {
       flex: 1;
       padding: 8px;
+      border: none;
+      outline: none;
     }
+
     #send-button {
       padding: 8px;
       background-color: #4CAF50;
       color: #fff;
       border: none;
-      border-radius: 4px;
+      border-radius: 0 0 10px 10px;
       cursor: pointer;
+    }
+
+    #robot {
+      display: block;
+      margin: auto;
+      width: 100px;
+      height: 100px;
+      background-color: #4CAF50;
+      border-radius: 50%;
+      position: relative;
+      animation: bounce 1s infinite alternate;
+    }
+
+    @keyframes bounce {
+      0% {
+        transform: translateY(0);
+      }
+      100% {
+        transform: translateY(-10px);
+      }
     }
   </style>
 
@@ -50,8 +84,10 @@
     </div>
   </div>
 
+  <div id="robot"></div>
+
   <script>
-    const hotelInfo = [
+   const hotelInfo = [
       "The Danubius Hotel Regents Park is a 4-star hotel located in central London.",
       "With 360 rooms and suites, we offer a range of comfortable accommodations for our guests.",
       "Our hotel is situated near Regent's Park, providing a peaceful and scenic environment.",
@@ -138,7 +174,6 @@
       "Our hotel is conveniently located near major transportation hubs, facilitating easy travel for our guests.",
       "Celebrate love and romance with our special wedding packages tailored to create unforgettable moments.",
     ];
-
     function cosineSimilarity(vector1, vector2) {
       const dotProduct = vector1.reduce((acc, val, i) => acc + val * vector2[i], 0);
       const magnitude1 = Math.sqrt(vector1.reduce((acc, val) => acc + val ** 2, 0));
@@ -166,14 +201,6 @@
       }
     }
 
-    // Add three dense layers using TensorFlow.js
-    const model = tf.sequential();
-    model.add(tf.layers.dense({ inputShape: [vocabulary.length], units: 64, activation: 'relu' }));
-    model.add(tf.layers.dense({ units: 32, activation: 'relu' }));
-    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
-
-    model.compile({ optimizer: 'adam', loss: 'binaryCrossentropy', metrics: ['accuracy'] });
-
     function getAnswer(userInput) {
       const preprocessedInput = preprocessText(userInput);
       const vocabulary = Array.from(new Set(preprocessedInput.concat(...hotelInfo.map(preprocessText))));
@@ -182,9 +209,7 @@
 
       const similarityScores = hotelInfo.map(info => {
         const infoVector = vectorizeText(preprocessText(info), vocabulary);
-        const inputTensor = tf.tensor([userInputVector]);
-        const infoTensor = tf.tensor([infoVector]);
-        return model.predict([inputTensor, infoTensor]).dataSync()[0];
+        return cosineSimilarity(userInputVector, infoVector);
       });
 
       const mostSimilarIndex = similarityScores.indexOf(Math.max(...similarityScores));
@@ -194,3 +219,4 @@
   </script>
 </body>
 </html>
+
